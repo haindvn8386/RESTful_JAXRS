@@ -40,7 +40,7 @@ public class ProjectService {
 
     //get project by id
     public ProjectDTO getProjectById(String id) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
@@ -58,7 +58,7 @@ public class ProjectService {
     //update project
     public ProjectDTO updateProject(String id, ProjectDTO projectDTO) {
 
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
@@ -82,7 +82,7 @@ public class ProjectService {
 
     //delete project
     public void deleteProject(String id) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         projectRepository.delete(project);
@@ -91,7 +91,7 @@ public class ProjectService {
 
     //patch project
     public ProjectDTO patchProject(String id, UpdateProjectDTO updateProjectDTO) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
         Project existingProject = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 
@@ -119,7 +119,7 @@ public class ProjectService {
     /// //////////////////////
     //add member to project
     public List<Long> addMembersInProject(String id, List<Long> membersId) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
@@ -137,7 +137,7 @@ public class ProjectService {
 
     //list member of project
     public List<UserDTO> getProjectMembers(String id) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id" + projectId));
 
@@ -146,7 +146,7 @@ public class ProjectService {
 
     //UPDATE MEMBER OF PROJECT
     public List<Long> removeMembersFromProject(String id, List<Long> membersId) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
@@ -162,7 +162,7 @@ public class ProjectService {
 
     //update member in project
     public List<Long> updateMembersInProject(String id, List<Long> membersId) {
-        Long projectId = utility.validateAndConvertProjectId(id);
+        Long projectId = utility.validateAndConvertId(id);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 

@@ -13,7 +13,7 @@ public final class utility {
     }
 
     // Hàm tĩnh để validate và convert ID
-    public static Long validateAndConvertProjectId(String id) {
+    public static Long validateAndConvertId(String id) {
         if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException(ERROR_ID_NULL_OR_EMPTY);
         }
