@@ -12,67 +12,90 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import restful.jaxrs.util.ApiResponse;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Hàm tiện ích để tạo ErrorResponse
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, Object details) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                status.value(),
-                message,
-                details
-        );
-        return new ResponseEntity<>(errorResponse, status);
-    }
-    // Hàm tiện ích để tạo ApiResponse
-    private ResponseEntity<ApiResponse<Object>> buildApiErrorResponse(HttpStatus status, String message, Object details) {
-        ApiResponse<Object> apiResponse = ApiResponse.error(status.value(), message, details);
+//    @ExceptionHandler(DuplicateResourceException.class)
+//    public ResponseEntity<ApiResponse<Object>> handleDuplicateResourceException(DuplicateResourceException ex) {
+//        ApiResponse<Object> response = new ApiResponse<>(
+//                HttpStatus.CONFLICT.value(),
+//                ex.getMessage(),
+//                ex.getErrors().isEmpty() ? null : ex.getErrors()
+//        );
+//        response.setErrorCode("DUPLICATE_RESOURCE");
+//        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+//    }
+//
+//    // Xử lý các exception khác
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
+//        ApiResponse<Object> response = new ApiResponse<>(
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                "An unexpected error occurred",
+//                "SERVER_ERROR"
+//        );
+//        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
+//    /*
+
+    //int status, String message, T data, String errorCode
+    //Utility function to create ApiResponse
+    private ResponseEntity<ApiResponse<Object>> buildApiErrorResponse(HttpStatus status, String message, Object details, String errorCode) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(status.value(), message, details,errorCode);
         return new ResponseEntity<>(apiResponse, status);
     }
-    //Xử lý ngoại lệ chung (Exception)
+
+    //General Exception Handling
     //Internal Server Error:500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex, WebRequest request) {
-        return buildApiErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", ex.getMessage(), "INTERNAL_SERVER_ERROR");
     }
 
-    // Xử lý ngoại lệ không tìm thấy tài nguyên (ResourceNotFoundException)
+    //Handle resource not found exception (ResourceNotFoundException)
     //404 NotFoundException
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        return buildApiErrorResponse(HttpStatus.NOT_FOUND, "Resource not found", ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.NOT_FOUND, "Resource not found", ex.getMessage(), "NOT_FOUND");
     }
 
-    // Xử lý ngoại lệ không tìm thấy phương thức (NoHandlerFoundException)
+    //Handle resource not found exception (ResourceNotFoundException)
+    //409 conflictException
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDuplicateResourceException(DuplicateResourceException ex) {
+        return buildApiErrorResponse(HttpStatus.CONFLICT, "Resource conflict", ex.getErrors(), "CONFLICT");
+    }
+
+    //Handle method not found exception (NoHandlerFoundException)
+    //404 NotFoundException
     @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(
             org.springframework.web.servlet.NoHandlerFoundException ex, WebRequest request) {
-        return buildApiErrorResponse(HttpStatus.NOT_FOUND, "Endpoint not found", ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.NOT_FOUND, "Endpoint not found", ex.getMessage(), "NOT_FOUND");
     }
 
-    // Xử lý ngoại lệ dữ liệu không hợp lệ (MethodArgumentNotValidException)
+    //Handling invalid data exception (MethodArgumentNotValidException)
     //Validation Errors (400 - Bad Request)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage()));
-        return buildApiErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+        return buildApiErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors, "BAD_REQUEST");
     }
 
-    // Xử lý ngoại lệ yêu cầu không hợp lệ (IllegalArgumentException)
+    //Handling invalid request exception (IllegalArgumentException)
     //Validation Errors (400 - Bad Request)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        return buildApiErrorResponse(HttpStatus.BAD_REQUEST, "Invalid argument", ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.BAD_REQUEST, "Invalid argument", ex.getMessage(), "BAD_REQUEST");
     }
 
-    // Xử lý ngoại lệ truy cập bị từ chối (AccessDeniedException)
+
+    //Handling AccessDeniedException
     //Access Denied (403 - Forbidden)
 //    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
 //    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(
@@ -80,33 +103,33 @@ public class GlobalExceptionHandler {
 //        return buildApiErrorResponse(HttpStatus.FORBIDDEN, "Access denied", ex.getMessage());
 //    }
 
-    // Xử lý ngoại lệ dữ liệu trùng lặp (DataIntegrityViolationException)
+    //Handling duplicate data exceptions (DataIntegrityViolationException)
     //Duplicate Entry (409 - Conflict)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, WebRequest request) {
-        return buildApiErrorResponse(HttpStatus.CONFLICT, "Data integrity violation", ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.CONFLICT, "Data integrity violation", ex.getMessage(), "CONFLICT");
     }
 
+    //Application: When calling the wrong HTTP method (for example: calling GET instead of POST).
     //MethodNotAllowed (405)
-    //Ứng dụng: Khi gọi sai HTTP method (ví dụ: gọi GET thay vì POST).
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Object>> handleMethodNotAllowed(
             HttpRequestMethodNotSupportedException ex) {
-        return buildApiErrorResponse(HttpStatus.METHOD_NOT_ALLOWED,"Method not allowed",ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.METHOD_NOT_ALLOWED,"Method not allowed",ex.getMessage(), "METHOD_NOT_ALLOWED");
     }
 
+    //Application: When the uploaded file exceeds the allowed size.
     //File Upload Errors
-    //Ứng dụng: Khi file upload vượt quá kích thước cho phép.
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceeded(
             MaxUploadSizeExceededException ex) {
-        return buildApiErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE,"File too large! Max size", ex.getMaxUploadSize());
+        return buildApiErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE,"File too large! Max size", ex.getMaxUploadSize(), "PAYLOAD_TOO_LARGE");
     }
 
     //JSON parse error
     @ExceptionHandler(JsonMappingException.class)
     public ResponseEntity<ApiResponse<Object>> handleJsonMappingException(JsonMappingException ex) {
-        return buildApiErrorResponse(HttpStatus.BAD_REQUEST,"JSON parse error",ex.getMessage());
+        return buildApiErrorResponse(HttpStatus.BAD_REQUEST,"JSON parse error",ex.getMessage(), "BAD_REQUEST");
     }
 }

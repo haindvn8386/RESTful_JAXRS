@@ -4,18 +4,21 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import restful.jaxrs.dto.ProjectDTO;
+import restful.jaxrs.dto.StaffDTO;
 import restful.jaxrs.dto.UpdateProjectDTO;
-import restful.jaxrs.dto.UserDTO;
 import restful.jaxrs.entity.Project;
-import restful.jaxrs.entity.User;
+import restful.jaxrs.entity.Staff;
+import restful.jaxrs.exception.DuplicateResourceException;
 import restful.jaxrs.exception.ResourceNotFoundException;
 import restful.jaxrs.mapper.ProjectMapper;
-import restful.jaxrs.mapper.UserMapper;
+import restful.jaxrs.mapper.StaffMapper;
 import restful.jaxrs.repository.ProjectRepository;
-import restful.jaxrs.repository.UserRepository;
+import restful.jaxrs.repository.StaffRepository;
 import restful.jaxrs.util.utility;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,13 +26,18 @@ import java.util.stream.Collectors;
 public class ProjectService {
     @Autowired
     private ProjectRepository projectRepository;
+
     @Autowired
     private ProjectMapper projectMapper;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserMapper userMapper;
 
+    @Autowired
+    private StaffRepository staffRepository;
+
+    @Autowired
+    private StaffMapper staffMapper;
+
+
+    Map<String, String> errors;
 
     //all project
     public List<ProjectDTO> getAllProjects() {
@@ -50,6 +58,22 @@ public class ProjectService {
 
     //create project
     public ProjectDTO createProject(ProjectDTO projectDTO) {
+
+        errors = new HashMap<>();
+        if (projectRepository.existsByName(projectDTO.getName())) {
+            errors.put("name", "Project with name '" + projectDTO.getName() + "' already exists");
+            // throw new DuplicateResourceException("Project with name '" + projectDTO.getName() + "' already exists");
+        }
+        if (projectRepository.existsByCode(projectDTO.getCode())) {
+            errors.put("code", "Project with code '" + projectDTO.getCode() + "' already exists");
+        }
+
+        // Nếu có lỗi, ném exception với tất cả lỗi
+        if (!errors.isEmpty()) {
+            throw new DuplicateResourceException(errors);
+        }
+
+
         Project project = projectMapper.toEntity(projectDTO);
         Project saved = projectRepository.save(project);
         return projectMapper.toDTO(saved);
@@ -69,9 +93,9 @@ public class ProjectService {
 
         //update manager
         if (projectDTO.getManager() != null && projectDTO.getManager().getId() != null) {
-            User manager = userRepository.findById(projectDTO.getManager().getId())
+            Staff staffManager = staffRepository.findById(projectDTO.getManager().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + projectDTO.getManager().getId()));
-            project.setManager(manager);
+            project.setManager(staffManager);
         } else {
             throw new IllegalArgumentException("Project not found with id: " + id);
         }
@@ -96,6 +120,9 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 
         //only update field have in DTO
+        if (updateProjectDTO.getCode() != null) {
+            existingProject.setCode(updateProjectDTO.getCode());
+        }
         if (updateProjectDTO.getName() != null) {
             existingProject.setName(updateProjectDTO.getName());
         }
@@ -106,7 +133,7 @@ public class ProjectService {
             existingProject.setStatus(updateProjectDTO.getStatus());
         }
         if (updateProjectDTO.getManager() != null) {
-            User manager = userRepository.findById(updateProjectDTO.getManager().getId())
+            Staff manager = staffRepository.findById(updateProjectDTO.getManager().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + updateProjectDTO.getManager().getId()));
             existingProject.setManager(manager);
         }
@@ -118,30 +145,30 @@ public class ProjectService {
     /// //////////////////////MEMBER SERVICE
     /// //////////////////////
     //add member to project
-    public List<Long> addMembersInProject(String id, List<Long> membersId) {
+    public List<Long> addMembersInProject(String id, List<Long> staffsId) {
         Long projectId = utility.validateAndConvertId(id);
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
-        List<User> users = membersId.stream()
-                .map(userId -> userRepository.findById(userId)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId)))
+        List<Staff> staff = staffsId.stream()
+                .map(staffId -> staffRepository.findById(staffId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + staffId)))
                 .collect(Collectors.toList());
 
-        project.setMembers(users);
+        project.setMembers(staff);
         projectRepository.save(project);
 
-        return project.getMembers().stream().map(User::getId).collect(Collectors.toList());
+        return project.getMembers().stream().map(Staff::getId).collect(Collectors.toList());
     }
 
     //list member of project
-    public List<UserDTO> getProjectMembers(String id) {
+    public List<StaffDTO> getProjectMembers(String id) {
         Long projectId = utility.validateAndConvertId(id);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id" + projectId));
 
-        return project.getMembers().stream().map(userMapper::toDto).collect(Collectors.toList());
+        return project.getMembers().stream().map(staffMapper::toDto).collect(Collectors.toList());
     }
 
     //UPDATE MEMBER OF PROJECT
@@ -150,14 +177,14 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
-        List<User> membersToRemove = membersId.stream()
-                .map(userId -> userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + userId)))
+        List<Staff> membersToRemove = membersId.stream()
+                .map(staffId -> staffRepository.findById(staffId).orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + staffId)))
                 .collect(Collectors.toList());
 
         project.getMembers().removeAll(membersToRemove);
         projectRepository.save(project);
 
-        return project.getMembers().stream().map(User::getId).collect(Collectors.toList());
+        return project.getMembers().stream().map(Staff::getId).collect(Collectors.toList());
     }
 
     //update member in project
@@ -166,14 +193,14 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
-        List<User> newMembersId = membersId.stream()
-                .map(userId -> userRepository.findById(userId)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found with " + userId)))
+        List<Staff> newMembersId = membersId.stream()
+                .map(staffId -> staffRepository.findById(staffId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with " + staffId)))
                 .collect(Collectors.toList());
 
         project.setMembers(newMembersId);
         projectRepository.save(project);
 
-        return project.getMembers().stream().map(User::getId).collect(Collectors.toList());
+        return project.getMembers().stream().map(Staff::getId).collect(Collectors.toList());
     }
 }

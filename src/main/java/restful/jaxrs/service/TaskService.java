@@ -5,16 +5,19 @@ import org.springframework.stereotype.Service;
 import restful.jaxrs.dto.TaskDTO;
 import restful.jaxrs.dto.UpdateTaskDTO;
 import restful.jaxrs.entity.Project;
+import restful.jaxrs.entity.Staff;
 import restful.jaxrs.entity.Task;
-import restful.jaxrs.entity.User;
 import restful.jaxrs.exception.ResourceNotFoundException;
 import restful.jaxrs.mapper.TaskMapper;
 import restful.jaxrs.repository.ProjectRepository;
+import restful.jaxrs.repository.StaffRepository;
 import restful.jaxrs.repository.TaskRepository;
 import restful.jaxrs.repository.UserRepository;
 import restful.jaxrs.util.utility;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,10 +29,11 @@ public class TaskService {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private TaskMapper taskMapper;
+
+    Map<String, String> errors;
+    @Autowired
+    private StaffRepository staffRepository;
 
     //list all task
     public List<TaskDTO> getAllTasks() {
@@ -45,11 +49,16 @@ public class TaskService {
 
     //add task
     public TaskDTO addTask(TaskDTO taskDTO) {
-        Task task = taskMapper.toEntity(taskDTO);
+        errors = new HashMap<String, String>();
 
-        if (taskDTO.getUserId() != null) {
-            userRepository.findById(taskDTO.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskDTO.getUserId()));
+        Task task = taskMapper.toEntity(taskDTO);
+        if (taskRepository.existsByTitle(taskDTO.getTitle())) {
+            errors.put("title", "Task with name '" + taskDTO.getTitle() + "' already exists");
+        }
+
+        if (taskDTO.getStaffId() != null) {
+            staffRepository.findById(taskDTO.getStaffId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskDTO.getStaffId()));
         }
         if (taskDTO.getProjectId() != null) {
             projectRepository.findById(taskDTO.getProjectId())
@@ -71,11 +80,12 @@ public class TaskService {
         existingTask.setStatus(taskDTO.getStatus());
         existingTask.setDescription(taskDTO.getDescription());
 
-        existingTask.setUser(userRepository.findById(taskDTO.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskDTO.getUserId())));
+        existingTask.setStaffId(staffRepository.findById(taskDTO.getStaffId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getStaffId())).getId()
+        );
 
-        existingTask.setProject(projectRepository.findById(taskDTO.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProjectId()))
+        existingTask.setProjectId(projectRepository.findById(taskDTO.getProjectId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProjectId())).getId()
         );
 
         Task updatedTask = taskRepository.save(existingTask);
@@ -85,9 +95,9 @@ public class TaskService {
     //delete task
     public void deleteTask(String id) {
         Long taskId = utility.validateAndConvertId(id);
-        Project project = projectRepository.findById(taskId)
+        Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
-        projectRepository.delete(project);
+        taskRepository.delete(task);
     }
 
 
@@ -109,16 +119,16 @@ public class TaskService {
             existingTask.setStatus(updateTaskDTO.getStatus());
         }
 
-        if (updateTaskDTO.getUserId() != null) {
-            User user = userRepository.findById(updateTaskDTO.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + updateTaskDTO.getUserId()));
-            existingTask.setUser(user);
+        if (updateTaskDTO.getStaffId() != null) {
+            Staff staff = staffRepository.findById(updateTaskDTO.getStaffId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + updateTaskDTO.getStaffId()));
+            existingTask.setStaffId(staff.getId());
         }
 
         if (updateTaskDTO.getProjectId() != null) {
             Project project = projectRepository.findById(updateTaskDTO.getProjectId())
                     .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + updateTaskDTO.getProjectId()));
-            existingTask.setProject(project);
+            existingTask.setProjectId(project.getId());
         }
 
         Task updatedTask = taskRepository.save(existingTask);

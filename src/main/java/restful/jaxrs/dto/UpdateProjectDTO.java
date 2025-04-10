@@ -5,6 +5,7 @@ import restful.jaxrs.enums.ProjectStatus;
 
 @Data
 public class UpdateProjectDTO {
+    private String code;
     private String name;
     private String description;
     private UserDTO manager;

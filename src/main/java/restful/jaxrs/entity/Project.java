@@ -2,6 +2,7 @@ package restful.jaxrs.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import restful.jaxrs.enums.ProjectStatus;
 
@@ -18,25 +19,33 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
+    @NotNull(message = "Code required")
+    private String code;
+
+    @Column(unique = true, nullable = false)
+    @NotNull(message = "Name required")
     private String name;
+
     private String description;
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
     @ManyToOne //1 user can manager many project
-    @JoinColumn(name = "manager_id")
-    private User manager;
+    @JoinColumn(name = "staff_id")
+    private Staff manager;
 
     @ManyToMany
     @JoinTable(
             name = "project_members",
             joinColumns = @JoinColumn(name = "project_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)),
-            inverseJoinColumns = @JoinColumn(name = "user_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+            inverseJoinColumns = @JoinColumn(name = "staff_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     )
-    private List<User> members = new ArrayList<>();
+    private List<Staff> members = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany
+    @JoinColumn(name="project_id")
     private List<Task> tasks = new ArrayList<>();
 }
 

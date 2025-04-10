@@ -18,5 +18,5 @@ public class UpdateTaskDTO {
 
     private Long projectId;
 
-    private Long userId;
+    private Long staffId;
 }

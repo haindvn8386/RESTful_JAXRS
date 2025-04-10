@@ -5,4 +5,5 @@ import restful.jaxrs.entity.Task;
 
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
+    boolean existsByTitle(String title);
 }

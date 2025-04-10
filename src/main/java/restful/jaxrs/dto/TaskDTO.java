@@ -21,6 +21,6 @@ public class TaskDTO {
     @NotNull(message = "Project ID is mandatory")
     private Long projectId;
 
-    @NotNull(message = "User ID is mandatory")
-    private Long userId;
+    @NotNull(message = "Staff ID is mandatory")
+    private Long staffId;
 }
