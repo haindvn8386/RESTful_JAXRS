@@ -1,42 +1,57 @@
 package restful.jaxrs.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
-@MappedSuperclass // Đánh dấu là class cha để các entity khác kế thừa
+@MappedSuperclass
 @Data
 @NoArgsConstructor
-public class BaseEntity {
+public class BaseEntity<T extends Serializable> implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private T id;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
 
-    @NotBlank
-    @Size(max = 50)
-    @Column(name = "created_by", nullable = false, updatable = false, length = 50)
-    private String createdBy;
+    @Column(name = "created_by", nullable = false, updatable = false)
+    @CreatedBy
+    private T createdBy;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @LastModifiedBy
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
 
-    @Size(max = 50)
-    @Column(name = "updated_by", length = 50)
-    private String updatedBy;
 
-    @Size(max = 10)
-    @Column(name = "status", length = 10)
+    @Column(name = "updated_by")
+    private T updatedBy;
+
+
+    @Column(name = "status")
     private String status = "Active";
 
     @Column(name = "start_date", nullable = false)
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime startDate;
 
     @Column(name = "end_date")
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime endDate;
 
 }

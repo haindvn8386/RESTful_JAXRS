@@ -9,5 +9,5 @@ public class UpdateProjectDTO {
     private String name;
     private String description;
     private UserDTO manager;
-    private ProjectStatus status;
+    private ProjectStatus statusProject;
 }

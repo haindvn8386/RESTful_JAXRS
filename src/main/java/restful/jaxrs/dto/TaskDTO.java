@@ -5,6 +5,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import restful.jaxrs.entity.Project;
 import restful.jaxrs.enums.TaskStatus;
 
 @Data
@@ -16,11 +17,8 @@ public class TaskDTO {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private TaskStatus status;
+    private TaskStatus statusStaff;
 
     @NotNull(message = "Project ID is mandatory")
-    private Long projectId;
-
-    @NotNull(message = "Staff ID is mandatory")
-    private Long staffId;
+    private Project project;
 }

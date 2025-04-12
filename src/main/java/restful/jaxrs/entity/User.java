@@ -1,6 +1,5 @@
 package restful.jaxrs.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,11 +13,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "users")
-public class User extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity<Long> {
 
     @NotBlank
     @Size(max = 256)
@@ -34,7 +29,6 @@ public class User extends BaseEntity {
     private String normalizedUserName;
 
     @Email(message = "Email should be valid")
-    @NotBlank(message = "Email is mandatory")
     @Size(max = 256)
     @Column(name = "email", length = 256, unique = true)
     private String email;
@@ -67,11 +61,24 @@ public class User extends BaseEntity {
     @Column(name = "access_failed_count")
     private int accessFailedCount;
 
-    @OneToOne
-    @JoinColumn(name = "profile_id", referencedColumnName = "id")
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "profile_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT))
     private Profile profile;
 
-    @OneToMany
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private List<Task> tasks = new ArrayList<>();
+    //1-n user-userRole
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserRole> userRoles = new ArrayList<>();
+
+    //n-n user-group
+    //CascadeType.PERSIST: When you persist entity A, if entity B is not persisted, it will be persisted automatically.
+    //CascadeType.MERGE: When you merge entity A, entity B will be merged as well.
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "user_group",
+            joinColumns = @JoinColumn(name = "user_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT)),
+            inverseJoinColumns = @JoinColumn(name = "group_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT))
+    )
+    private List<Group> groups = new ArrayList<>();
+
 }

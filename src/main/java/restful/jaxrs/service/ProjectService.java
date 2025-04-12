@@ -89,13 +89,13 @@ public class ProjectService {
 
         project.setName(projectDTO.getName());
         project.setDescription(projectDTO.getDescription());
-        project.setStatus(projectDTO.getStatus());
+        project.setStatusProject(projectDTO.getStatusProject());
 
         //update manager
         if (projectDTO.getManager() != null && projectDTO.getManager().getId() != null) {
             Staff staffManager = staffRepository.findById(projectDTO.getManager().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + projectDTO.getManager().getId()));
-            project.setManager(staffManager);
+            project.setStaffManager(staffManager);
         } else {
             throw new IllegalArgumentException("Project not found with id: " + id);
         }
@@ -129,13 +129,13 @@ public class ProjectService {
         if (updateProjectDTO.getDescription() != null) {
             existingProject.setDescription(updateProjectDTO.getDescription());
         }
-        if (updateProjectDTO.getStatus() != null) {
-            existingProject.setStatus(updateProjectDTO.getStatus());
+        if (updateProjectDTO.getStatusProject() != null) {
+            existingProject.setStatusProject(updateProjectDTO.getStatusProject());
         }
         if (updateProjectDTO.getManager() != null) {
             Staff manager = staffRepository.findById(updateProjectDTO.getManager().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + updateProjectDTO.getManager().getId()));
-            existingProject.setManager(manager);
+            existingProject.setStaffManager(manager);
         }
         Project updatedProject = projectRepository.save(existingProject);
         return projectMapper.toDTO(updatedProject);

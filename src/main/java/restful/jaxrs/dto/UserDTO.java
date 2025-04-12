@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import restful.jaxrs.entity.Profile;
 import restful.jaxrs.entity.Task;
+import restful.jaxrs.enums.Gender;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -43,11 +44,9 @@ public class UserDTO extends BaseDTO {
     // Thay Profile bằng các trường thô
     private String fullName;
     private String dateOfBirth;
-    private String gender;
+    private Gender gender;
     private String phoneNumber;
     private String address;
     private String avatarUrl;
-
-    private List<Long> taskIds;
 
 }

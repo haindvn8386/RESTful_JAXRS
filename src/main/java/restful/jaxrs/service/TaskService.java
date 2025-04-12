@@ -56,13 +56,9 @@ public class TaskService {
             errors.put("title", "Task with name '" + taskDTO.getTitle() + "' already exists");
         }
 
-        if (taskDTO.getStaffId() != null) {
-            staffRepository.findById(taskDTO.getStaffId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskDTO.getStaffId()));
-        }
-        if (taskDTO.getProjectId() != null) {
-            projectRepository.findById(taskDTO.getProjectId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProjectId()));
+        if (taskDTO.getProject() != null) {
+            projectRepository.findById(taskDTO.getProject().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProject().getId()));
         }
 
         //check user
@@ -76,16 +72,13 @@ public class TaskService {
         //check task by id
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+
         existingTask.setTitle(taskDTO.getTitle());
-        existingTask.setStatus(taskDTO.getStatus());
+        existingTask.setStatusStaff(taskDTO.getStatusStaff());
         existingTask.setDescription(taskDTO.getDescription());
 
-        existingTask.setStaffId(staffRepository.findById(taskDTO.getStaffId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getStaffId())).getId()
-        );
-
-        existingTask.setProjectId(projectRepository.findById(taskDTO.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProjectId())).getId()
+        existingTask.setProject(projectRepository.findById(taskDTO.getProject().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + taskDTO.getProject().getId()))
         );
 
         Task updatedTask = taskRepository.save(existingTask);
@@ -115,20 +108,14 @@ public class TaskService {
         if (updateTaskDTO.getDescription() != null) {
             existingTask.setDescription(updateTaskDTO.getDescription());
         }
-        if (updateTaskDTO.getStatus() != null) {
-            existingTask.setStatus(updateTaskDTO.getStatus());
+        if (updateTaskDTO.getStatusStaff() != null) {
+            existingTask.setStatusStaff(updateTaskDTO.getStatusStaff());
         }
 
-        if (updateTaskDTO.getStaffId() != null) {
-            Staff staff = staffRepository.findById(updateTaskDTO.getStaffId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + updateTaskDTO.getStaffId()));
-            existingTask.setStaffId(staff.getId());
-        }
-
-        if (updateTaskDTO.getProjectId() != null) {
-            Project project = projectRepository.findById(updateTaskDTO.getProjectId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + updateTaskDTO.getProjectId()));
-            existingTask.setProjectId(project.getId());
+        if (updateTaskDTO.getProject() != null) {
+            Project project = projectRepository.findById(updateTaskDTO.getProject().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + updateTaskDTO.getProject().getId()));
+            existingTask.setProject(project);
         }
 
         Task updatedTask = taskRepository.save(existingTask);

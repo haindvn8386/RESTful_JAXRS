@@ -40,106 +40,77 @@ public class UserService {
     private int redis_timeout;
 
 
-    //list all user
+    /**
+     * Retrieves a paginated list of all users, with optional sorting and search functionality.
+     * Results are cached in Redis to improve performance for subsequent requests.
+     *
+     * @param pageNumber the page number to retrieve (1-based index)
+     * @param sortBy     the field to sort by (optional, defaults to unsorted if null or empty)
+     * @param searchKey  the keyword to filter users by username (optional, case-insensitive)
+     * @return a {@link Page} containing a list of {@link UserDTO} objects, along with pagination metadata
+     */
     public Page<UserDTO> getAllUsers(int pageNumber, String sortBy, String searchKey) {
-
-        //create redis key from parameter
+        // Create a unique Redis cache key based on method parameters
         String cacheKey = "users:page:" + pageNumber + ":sort:" + (sortBy != null ? sortBy : "none") + ":search:" + (searchKey != null ? searchKey.toLowerCase() : "none");
+
+        // Attempt to retrieve cached data from Redis
         try {
-            @SuppressWarnings("unchecked") List<UserDTO> content = (List<UserDTO>) redisTemplate.opsForHash().get(cacheKey, "content");
+            @SuppressWarnings("unchecked")
+            List<UserDTO> content = (List<UserDTO>) redisTemplate.opsForHash().get(cacheKey, "content");
             Object totalObj = redisTemplate.opsForHash().get(cacheKey, "totalElements");
             Long total = null;
+
+            // Handle type conversion for total elements
             if (totalObj != null) {
                 if (totalObj instanceof Long) {
                     total = (Long) totalObj;
                 } else if (totalObj instanceof Integer) {
-                    //convert from Integer to Long
                     total = ((Integer) totalObj).longValue();
                 }
             }
 
+            // Return cached data if available
             if (content != null && total != null) {
                 Sort sort = StringUtils.hasText(sortBy) ? Sort.by(sortBy) : Sort.unsorted();
                 Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
                 return new PageImpl<>(content, pageable, total);
             }
         } catch (Exception e) {
+            // Log any serialization errors during cache retrieval
             System.err.println("Serialization error: " + e.getMessage());
             e.printStackTrace();
         }
 
+        // Define sorting and pagination parameters
         Sort sort = StringUtils.hasText(sortBy) ? Sort.by(sortBy) : Sort.unsorted();
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
 
+        // Fetch users from the database based on search criteria
         Page<User> userPage;
         if (StringUtils.hasText(searchKey)) {
             userPage = userRepository.findByUserNameContainingIgnoreCase(searchKey, pageable);
-            //userPage = userRepository.findByUserNameStartingWithIgnoreCase(searchKey, pageable);
-//            String normalizedSearchKey = searchKey.toUpperCase();
-//            userPage = userRepository.findByNormalizedNormalizedUserNameContaining(normalizedSearchKey, pageable);
         } else {
             userPage = userRepository.findAll(pageable);
         }
 
-        List<UserDTO> contentDto = userPage.getContent().stream().map(userMapper::toDto).collect(Collectors.toList());
+        // Convert User entities to UserDTOs
+        List<UserDTO> contentDto = userPage.getContent().stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
         Page<UserDTO> resultPage = new PageImpl<>(contentDto, pageable, userPage.getTotalElements());
 
+        // Cache the results in Redis for future requests
         try {
             redisTemplate.opsForHash().put(cacheKey, "content", contentDto);
             redisTemplate.opsForHash().put(cacheKey, "totalElements", userPage.getTotalElements());
             redisTemplate.expire(cacheKey, redis_timeout, TimeUnit.MINUTES);
         } catch (Exception e) {
+            // Log any serialization errors during cache storage
             System.err.println("Serialization error: " + e.getMessage());
             e.printStackTrace();
         }
 
         return resultPage;
-      /*
-        String cacheKey = "users:page:" + pageNumber + ":sort:" + (sortBy != null ? sortBy : "none") + ":search:" + (searchKey != null ? searchKey.toLowerCase() : "none");
-
-        //check data from Redis
-        Object cachedObject = redisTemplate.opsForValue().get(cacheKey);
-        Page<User> cachedUsers = null;
-        if (cachedObject != null) {
-            try {
-                //convert from Object to Map
-                @SuppressWarnings("unchecked")
-                Map<String, Object> cachedMap = (Map<String, Object>)  cachedObject;
-                //Extract content, pageable, total
-                @SuppressWarnings("unchecked")
-                List<User> content = objectMapper.convertValue(cachedMap.get("content"), new com.fasterxml.jackson.core.type.TypeReference<List<User>>() {});
-                long total = ((Number) cachedMap.get("totalElements")).longValue();
-                Sort sort = StringUtils.hasText(sortBy) ? Sort.by(sortBy) : Sort.unsorted();
-                Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
-                //Recreate Page<User>
-                 cachedUsers = new PageImpl<>(content, pageable, total);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-       // if cached data, return to controller
-        if (cachedUsers != null) {
-            return  cachedUsers.map(userMapper::toDto);
-        }
-
-        //create sortBy
-        Sort sort = StringUtils.hasText(sortBy) ? Sort.by(sortBy) : Sort.unsorted();
-        // create Pageable
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sort);
-
-        if (StringUtils.hasText(searchKey)) {
-            cachedUsers = userRepository.findByUserNameContainingIgnoreCase(searchKey, pageable);
-        } else {
-            cachedUsers = userRepository.findAll(pageable);
-        }
-
-        //save to Redis with a time to live
-        redisTemplate.opsForValue().set(cacheKey, cachedUsers, 1, TimeUnit.MINUTES);
-        return cachedUsers.map(userMapper::toDto);
-
-         */
-
     }
 
     //select user by id

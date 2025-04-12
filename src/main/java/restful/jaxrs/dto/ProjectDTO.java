@@ -11,5 +11,5 @@ public class ProjectDTO {
     private String name;
     private String description;
     private Staff manager;
-    private ProjectStatus status;
+    private ProjectStatus statusProject;
 }

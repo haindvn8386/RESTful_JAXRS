@@ -12,12 +12,9 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "Projects")
+@Table(name = "projects")
 
-public class Project {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Project extends BaseEntity<Long> {
 
     @Column(unique = true, nullable = false)
     @NotNull(message = "Code required")
@@ -30,22 +27,25 @@ public class Project {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private ProjectStatus status;
+    @Column(name="status_project", nullable = false)
+    private ProjectStatus statusProject;
 
-    @ManyToOne //1 user can manager many project
-    @JoinColumn(name = "staff_id")
-    private Staff manager;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id", nullable = false)
+    private Staff StaffManager;
+
 
     @ManyToMany
     @JoinTable(
             name = "project_members",
-            joinColumns = @JoinColumn(name = "project_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)),
-            inverseJoinColumns = @JoinColumn(name = "staff_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+            joinColumns = @JoinColumn(name = "project_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT)),
+            inverseJoinColumns = @JoinColumn(name = "staff_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT))
     )
     private List<Staff> members = new ArrayList<>();
 
-    @OneToMany
-    @JoinColumn(name="project_id")
+    //projects-task
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private List<Task> tasks = new ArrayList<>();
 }
 
