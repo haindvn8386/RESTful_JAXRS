@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import restful.jr.entity.User;
 
+import java.util.Optional;
+
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserName(String userName);
 
@@ -20,4 +22,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByUserNameContainingIgnoreCase(String username, Pageable pageable);
 
+    Optional<User> findByUserName(String userName);
 }

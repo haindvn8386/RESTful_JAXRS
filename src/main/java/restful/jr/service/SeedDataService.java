@@ -93,7 +93,7 @@ public class SeedDataService {
                 // Tạo lại username và email duy nhất
                 long newId = userRepository.findMaxId()+ 1;
                 user.setUserName(generateUniqueUsername(faker, newId));
-                user.setNormalizedUserName(user.getUserName().toUpperCase());
+                user.setNormalizedUserName(user.getNormalizedUserName().toUpperCase());
                 user.setEmail(generateUniqueEmail(faker, newId));
                 user.setNormalizedEmail(user.getEmail().toUpperCase());
             } catch (Exception ex) {
@@ -125,7 +125,7 @@ public class SeedDataService {
     private User createFakeUser(Faker faker, Profile profile, long index) {
         User user = new User();
         user.setUserName(generateUniqueUsername(faker, index));
-        user.setNormalizedUserName(user.getUserName().toUpperCase());
+        user.setNormalizedUserName(user.getNormalizedUserName().toUpperCase());
         user.setEmail(generateUniqueEmail(faker, index));
         user.setNormalizedEmail(user.getEmail().toUpperCase());
         user.setPasswordHash(faker.internet().password(8, 20, true, true, true));

@@ -1,19 +1,23 @@
 package restful.jr.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Data
 @Entity
 @Table(name = "users")
-public class User extends BaseEntity<Long> {
+public class User extends BaseEntity<Long> implements UserDetails {
 
     @NotBlank
     @Size(max = 256)
@@ -64,6 +68,7 @@ public class User extends BaseEntity<Long> {
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "profile_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT))
+    @JsonIgnore
     private Profile profile;
 
     //1-n user-userRole
@@ -81,4 +86,46 @@ public class User extends BaseEntity<Long> {
     )
     private List<Group> groups = new ArrayList<>();
 
+
+
+
+    /***add more**/
+    /***add more**/
+    /***add more**/
+    /***add more**/
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return "";
+    }
+
+
+    @Override
+    public String getUsername() {
+        return "";
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
+    }
 }

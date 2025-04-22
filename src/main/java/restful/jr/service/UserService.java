@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import restful.jr.dto.UpdateUserDTO;
@@ -179,5 +181,8 @@ public class UserService {
         return userMapper.toDto(userUpdate);
     }
 
-
+    public UserDetailsService UserServiceDetail() {
+        return userName -> userRepository.findByUserName(userName)
+                .orElseThrow(() -> new UsernameNotFoundException(userName));
+    }
 }
