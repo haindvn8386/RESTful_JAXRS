@@ -23,8 +23,7 @@ public class BaseEntity<T extends Serializable> implements Serializable {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false, updatable = false)
     @CreatedBy
@@ -36,10 +35,8 @@ public class BaseEntity<T extends Serializable> implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-
     @Column(name = "updated_by")
     private T updatedBy;
-
 
     @Column(name = "status")
     private String status = "Active";

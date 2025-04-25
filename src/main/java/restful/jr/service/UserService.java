@@ -90,7 +90,7 @@ public class UserService {
         // Fetch users from the database based on search criteria
         Page<User> userPage;
         if (StringUtils.hasText(searchKey)) {
-            userPage = userRepository.findByUserNameContainingIgnoreCase(searchKey, pageable);
+            userPage = userRepository.findByUsernameContainingIgnoreCase(searchKey, pageable);
         } else {
             userPage = userRepository.findAll(pageable);
         }
@@ -137,7 +137,8 @@ public class UserService {
 
         user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User is not found with " + id));
         redisTemplate.opsForValue().set(key, user, 5, TimeUnit.MINUTES);
-        return userMapper.toDto(user);
+        UserDTO userDTO = userMapper.toDto(user);
+        return userDTO;
     }
 
     //add user
@@ -159,7 +160,7 @@ public class UserService {
     public UserDTO updateUser(String id, UserDTO userDTO) {
         Long userId = utility.validateAndConvertId(id);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User is not found with " + id));
-        user.setUserName(userDTO.getUserName());
+        user.setUsername(userDTO.getUsername());
         user.setEmail(userDTO.getEmail());
         User userUpdate = userRepository.save(user);
         return userMapper.toDto(userUpdate);
@@ -171,7 +172,7 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User is not found with " + id));
 
         if (userDTO.getName() != null) {
-            user.setUserName(userDTO.getName());
+            user.setUsername(userDTO.getName());
         }
         if (userDTO.getEmail() != null) {
             user.setEmail(userDTO.getEmail());
@@ -182,7 +183,7 @@ public class UserService {
     }
 
     public UserDetailsService UserServiceDetail() {
-        return userName -> userRepository.findByUserName(userName)
-                .orElseThrow(() -> new UsernameNotFoundException(userName));
+        return username -> userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
     }
 }

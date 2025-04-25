@@ -31,9 +31,6 @@ public class Profile extends BaseEntity<Long> {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "avatarUrl")
     private String avatarUrl;
 

@@ -1,9 +1,0 @@
-jwt:
-  expirationMinutes: 5
-  expirationDay: 14
-  accessKey: 50580af0a7185e9508c8d56f76afe183a14c9f7902d7ba5d80f2707e6ea7935f
-  refreshKey: d512f715538bfceda50a4254ba4478441a73dc8f1b3d01c5df9b94c8ff6e20b3
-
-spring:
-  sendGrid:
-    apiKey: SG.admin@123

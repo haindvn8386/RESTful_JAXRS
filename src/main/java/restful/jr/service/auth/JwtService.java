@@ -4,15 +4,15 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import restful.jr.enums.TokenType;
+import restful.jr.exception.JwtAuthenticationException;
+import restful.jr.exception.JwtTokenExpiredException;
 
 import java.security.Key;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -32,9 +32,8 @@ public class JwtService implements JwtInterface {
     @Value("${jwt.refreshKey}")
     private String refreshKey;
 
-
     @Override
-    public String generateAccessToken(Long userId, String userName, Collection<? extends GrantedAuthority> authorities) {
+    public String generateAccessToken(Long userId, String userName, List<String> authorities) {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
@@ -43,7 +42,7 @@ public class JwtService implements JwtInterface {
     }
 
     @Override
-    public String generateRefreshToken(Long userId, String userName, Collection<? extends GrantedAuthority> authorities) {
+    public String generateRefreshToken(Long userId, String userName, List<String> authorities) {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
@@ -53,29 +52,27 @@ public class JwtService implements JwtInterface {
 
     @Override
     public String extractUsername(String token, TokenType tokenType) {
-
         return getClaimsFromToken(tokenType, token, Claims::getSubject);
     }
 
-
-    private <T> T getClaimsFromToken(TokenType tokenType, String token, Function<Claims, T> claimsRxtractor) {
-        final Claims claims = extractClaim(token, tokenType);
+    public <T> T getClaimsFromToken(TokenType tokenType, String token, Function<Claims, T> claimsRxtractor) {
+        final Claims claims = extractAllClaims(token, tokenType);
         return claimsRxtractor.apply(claims);
     }
 
-    private Claims extractClaim(String token, TokenType tokenType) {
+    public Claims extractAllClaims(String token, TokenType tokenType) {
         try {
-            //return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody();
             return Jwts.parser()
-                    .setSigningKey(accessKey)
+                    .setSigningKey(getSecretKey(tokenType))
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-        } catch (SignatureException | ExpiredJwtException e) {
-            throw new AccessDeniedException("Access denied! : " + e.getMessage());
+        } catch (ExpiredJwtException e) {
+            throw new JwtTokenExpiredException("JWT Token has expired");
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new JwtAuthenticationException("Invalid JWT token");
         }
     }
-
 
     private String generateAccessToken(Map<String, Object> claims, String username) {
         // Tạo JWT
@@ -111,8 +108,21 @@ public class JwtService implements JwtInterface {
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + tokenType);
         }
-
     }
+
+    public Claims validateRefreshToken(String refreshToken) {
+        try {
+            // Parse and validate the refresh token
+            return Jwts.parser()
+                    .setSigningKey(getSecretKey(TokenType.REFRESH_TOKEN))
+                    .build()
+                    .parseClaimsJws(refreshToken)
+                    .getBody();
+        } catch (JwtException e) {
+            throw new JwtException("Invalid or expired refresh token: " + e.getMessage());
+        }
+    }
+
 }
 
 

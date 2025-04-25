@@ -1,6 +1,8 @@
 package restful.jr.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.ServletException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,49 +13,32 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import restful.jr.util.ApiResponse;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-//    @ExceptionHandler(DuplicateResourceException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleDuplicateResourceException(DuplicateResourceException ex) {
-//        ApiResponse<Object> response = new ApiResponse<>(
-//                HttpStatus.CONFLICT.value(),
-//                ex.getMessage(),
-//                ex.getErrors().isEmpty() ? null : ex.getErrors()
-//        );
-//        response.setErrorCode("DUPLICATE_RESOURCE");
-//        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-//    }
-//
-//    // Xử lý các exception khác
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
-//        ApiResponse<Object> response = new ApiResponse<>(
-//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-//                "An unexpected error occurred",
-//                "SERVER_ERROR"
-//        );
-//        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
-//    /*
 
-    //int status, String message, T data, String errorCode
-    //Utility function to create ApiResponse
     private ResponseEntity<ApiResponse<Object>> buildApiErrorResponse(HttpStatus status, String message, Object details, String errorCode) {
-        ApiResponse<Object> apiResponse = ApiResponse.error(status.value(), message, details,errorCode);
+        ApiResponse<Object> apiResponse = ApiResponse.error(status.value(), message, details, errorCode);
         return new ResponseEntity<>(apiResponse, status);
     }
 
-    //General Exception Handling
-    //Internal Server Error:500
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex, WebRequest request) {
         return buildApiErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", ex.getMessage(), "INTERNAL_SERVER_ERROR");
     }
+
+    @ExceptionHandler(ServletException.class)
+    public ResponseEntity<ApiResponse<Object>> handleServletException(
+            ServletException ex, WebRequest request) {
+        return buildApiErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Servlet error occurred", ex.getMessage(), "SERVLET_ERROR");
+    }
+
 
     //Handle resource not found exception (ResourceNotFoundException)
     //404 NotFoundException
@@ -97,11 +82,53 @@ public class GlobalExceptionHandler {
 
     //Handling AccessDeniedException
     //Access Denied (403 - Forbidden)
-//    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(
-//            org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
-//        return buildApiErrorResponse(HttpStatus.FORBIDDEN, "Access denied", ex.getMessage());
-//    }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(
+            AccessDeniedException ex, WebRequest request) {  // Sửa parameter type
+        return buildApiErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Access denied",
+                ex.getMessage(),
+                "ACCESS_DENIED"
+        );
+    }
+
+
+    //   (401 - Unauthorized)
+    @ExceptionHandler(JwtTokenExpiredException.class)
+    public ResponseEntity<ApiResponse<Object>> handleJwtTokenExpiredException(
+            JwtTokenExpiredException ex, WebRequest request) {
+        return buildApiErrorResponse(
+                HttpStatus.UNAUTHORIZED,  // Status 401 thay vì 406
+                "Token expired",          // Message chung
+                ex.getMessage(),          // Chi tiết message từ exception
+                "JWT_EXPIRED"            // Error code riêng cho token hết hạn
+        );
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAuthenticationException(
+            AuthenticationException ex, WebRequest request) {
+        return buildApiErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Authentication failed",
+                ex.getMessage(),
+                "AUTH_FAILED"
+        );
+    }
+
+
+    // Handling Generic JWT Exceptions (401 - Unauthorized)
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiResponse<Object>> handleJwtException(
+            JwtException ex, WebRequest request) {
+        return buildApiErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid token",
+                ex.getMessage(),
+                "JWT_INVALID"
+        );
+    }
 
     //Handling duplicate data exceptions (DataIntegrityViolationException)
     //Duplicate Entry (409 - Conflict)

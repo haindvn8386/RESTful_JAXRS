@@ -30,7 +30,7 @@ public class Project extends BaseEntity<Long> {
     private ProjectStatus statusProject;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "staff_id", nullable = false)
     private Staff StaffManager;
 
@@ -44,7 +44,7 @@ public class Project extends BaseEntity<Long> {
     private List<Staff> members = new ArrayList<>();
 
     //projects-task
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.EAGER)
     private List<Task> tasks = new ArrayList<>();
 }
 

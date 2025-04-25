@@ -92,8 +92,8 @@ public class SeedDataService {
             try {
                 // Tạo lại username và email duy nhất
                 long newId = userRepository.findMaxId()+ 1;
-                user.setUserName(generateUniqueUsername(faker, newId));
-                user.setNormalizedUserName(user.getNormalizedUserName().toUpperCase());
+                user.setUsername(generateUniqueUsername(faker, newId));
+                user.setNormalizedUsername(user.getNormalizedUsername().toUpperCase());
                 user.setEmail(generateUniqueEmail(faker, newId));
                 user.setNormalizedEmail(user.getEmail().toUpperCase());
             } catch (Exception ex) {
@@ -114,7 +114,7 @@ public class SeedDataService {
                 faker.date().birthday(18, 60).toInstant().atZone(ZoneOffset.UTC).toInstant()
         ));
         profile.setPhoneNumber(faker.phoneNumber().cellPhone());
-        profile.setAddress(faker.address().fullAddress());
+        //profile.setAddress(faker.address().fullAddress());
         profile.setAvatarUrl(faker.internet().avatar());
         profile.setStatus("Active");
         profile.setCreatedBy(0L); // Giả định user mặc định
@@ -124,8 +124,8 @@ public class SeedDataService {
 
     private User createFakeUser(Faker faker, Profile profile, long index) {
         User user = new User();
-        user.setUserName(generateUniqueUsername(faker, index));
-        user.setNormalizedUserName(user.getNormalizedUserName().toUpperCase());
+        user.setUsername(generateUniqueUsername(faker, index));
+        user.setNormalizedUsername(user.getNormalizedUsername().toUpperCase());
         user.setEmail(generateUniqueEmail(faker, index));
         user.setNormalizedEmail(user.getEmail().toUpperCase());
         user.setPasswordHash(faker.internet().password(8, 20, true, true, true));

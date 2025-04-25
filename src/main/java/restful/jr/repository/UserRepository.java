@@ -10,7 +10,7 @@ import restful.jr.entity.User;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByUserName(String userName);
+    boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
 
@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findAll(Pageable pageable);
 
-    Page<User> findByUserNameContainingIgnoreCase(String username, Pageable pageable);
+    Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
 
-    Optional<User> findByUserName(String userName);
+    Optional<User> findByUsername(String username);
 }

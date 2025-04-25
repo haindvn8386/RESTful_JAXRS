@@ -16,6 +16,15 @@ public class Permission extends BaseEntity<Long> {
     @Column(length = 256, unique = true)
     private String name;
 
+    @Column(length = 250)
+    private String method;
+
+    @Column(length = 250)
+    private String path;
+
+    @Column(length = 250)
+    private String category;
+
     @Column(length = 500)
     private String description;
 

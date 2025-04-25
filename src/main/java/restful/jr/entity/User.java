@@ -6,7 +6,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
@@ -22,7 +24,7 @@ public class User extends BaseEntity<Long> implements UserDetails {
     @NotBlank
     @Size(max = 256)
     @Column(name = "user_name", length = 256, unique = true)
-    private String userName;
+    private String username;
 
     @NotBlank
     @Column(name = "password_hash", columnDefinition = "TEXT")
@@ -30,7 +32,7 @@ public class User extends BaseEntity<Long> implements UserDetails {
 
     @Size(max = 256)
     @Column(name = "normalized_user_name", length = 256, unique = true)
-    private String normalizedUserName;
+    private String normalizedUsername;
 
     @Email(message = "Email should be valid")
     @Size(max = 256)
@@ -66,14 +68,20 @@ public class User extends BaseEntity<Long> implements UserDetails {
     private int accessFailedCount;
 
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "profile_id", foreignKey = @ForeignKey(ConstraintMode.CONSTRAINT))
-    @JsonIgnore
+    //@JsonIgnore
     private Profile profile;
 
     //1-n user-userRole
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRole> userRoles = new ArrayList<>();
+
+    //1-n user-address
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Address> addresses = new ArrayList<>();
+
 
     //n-n user-group
     //CascadeType.PERSIST: When you persist entity A, if entity B is not persisted, it will be persisted automatically.
@@ -88,25 +96,29 @@ public class User extends BaseEntity<Long> implements UserDetails {
 
 
 
-
     /***add more**/
     /***add more**/
     /***add more**/
     /***add more**/
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        //get roles
+        List<Role> roles = userRoles.stream().map(UserRole::getRole).toList();
+        //get role name
+        List<String> roleNames = roles.stream().map(Role::getName).toList();
+
+        return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
     }
 
     @Override
     public String getPassword() {
-        return "";
+        return this.passwordHash;
     }
 
 
     @Override
     public String getUsername() {
-        return "";
+        return this.username;
     }
 
     @Override

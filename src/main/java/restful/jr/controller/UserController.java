@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import restful.jr.dto.UpdateUserDTO;
 import restful.jr.dto.UserDTO;
@@ -20,6 +21,7 @@ public class UserController {
 
     //get all user
     @GetMapping
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Page<UserDTO>>> getAllUsers(@RequestParam(name = "page", defaultValue = "1") int page
             , @RequestParam(required = false) String sortBy, @RequestParam(required = false) String search) {
 
@@ -29,7 +31,9 @@ public class UserController {
 
     //get user by id
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('user')")
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable String id) {
+        UserDTO xx = userService.getUserById(id);
         return ResponseEntity.ok(ApiResponse.success(200, "User retrieved successfully", userService.getUserById(id)));
     }
 

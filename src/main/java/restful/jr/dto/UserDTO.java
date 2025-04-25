@@ -9,9 +9,9 @@ import java.time.OffsetDateTime;
 @Data
 public class UserDTO extends BaseDTO {
     private Long id;
-    private String userName;
+    private String username;
     private String passwordHash;
-    private String normalizedUserName;
+    private String normalizedUsername;
     private String email;
     private String normalizedEmail;
     private boolean emailConfirmed;
@@ -38,7 +38,6 @@ public class UserDTO extends BaseDTO {
     private String dateOfBirth;
     private Gender gender;
     private String phoneNumber;
-    private String address;
     private String avatarUrl;
 
 }

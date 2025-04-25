@@ -37,7 +37,7 @@ public class Task extends BaseEntity<Long> {
 
 
     //task - project
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 }
